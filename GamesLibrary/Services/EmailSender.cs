@@ -15,6 +15,14 @@ namespace GamesLibrary.Services
             _emailConfig = emailConfig?.Value ?? throw new ArgumentNullException(nameof(emailConfig), ResponseConstants.EMAIL.CONFIG_NULL);
         }
 
+        /// <summary>
+        /// Asynchronously sends an email to the specified recipient.
+        /// </summary>
+        /// <param name="email">The email address of the recipient.</param>
+        /// <param name="subject">The subject of the email.</param>
+        /// <param name="message">The body of the email.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the 'email' parameter is null or empty.</exception>
+        /// <exception cref="Exception">Thrown when there is an error sending the email.</exception>
         public async Task SendEmailAsync(string email, string subject, string message)
         {
             if (string.IsNullOrEmpty(email))

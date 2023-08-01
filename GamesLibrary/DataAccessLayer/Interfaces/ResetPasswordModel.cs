@@ -1,4 +1,4 @@
-﻿namespace GamesLibrary.DataAccessLayer.Models
+﻿namespace GamesLibrary.DataAccessLayer.Interfaces
 {
     public class ResetPasswordModel
     {

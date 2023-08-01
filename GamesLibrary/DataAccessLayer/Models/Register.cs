@@ -1,6 +1,6 @@
 ﻿namespace GamesLibrary.DataAccessLayer.Models
 {
-    public class RegisterModel
+    public class Register
     {
         public string UserName { get; set; }
         public string Email { get; set; }

@@ -2,9 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using GamesLibrary.DataAccessLayer.Contacts;
-using GamesLibrary.Utils.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using static GamesLibrary.Utils.Constants.ResponseConstants;
@@ -18,15 +16,22 @@ namespace GamesLibrary.Services
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuration, IEmailSender emailSender)
+        public UserService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuration, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _emailSender = emailSender;
+            _httpContextAccessor = httpContextAccessor;
         }
 
+        /// <summary>
+        /// Get all users.
+        /// </summary>
+        /// <returns>A list of all users.</returns>
+        /// <exception cref="Exception">Thrown when there is an error retrieving the users.</exception>
         public async Task<List<UserDto>> GetAllUsers()
         {
             try
@@ -45,6 +50,12 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Get a user by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user.</param>
+        /// <returns>The UserDto object if found, otherwise throws an exception.</returns>
+        /// <exception cref="Exception">Thrown when the user is not found or there is an error retrieving it.</exception>
         public async Task<UserDto> GetUserById(string id)
         {
             try
@@ -68,6 +79,13 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Register a new user asynchronously.
+        /// </summary>
+        /// <param name="user">The user to be registered.</param>
+        /// <param name="password">The password for the user.</param>
+        /// <returns>The result of the user registration operation.</returns>
+        /// <exception cref="Exception">Thrown when there is an error saving the user to the database.</exception>
         public async Task<IdentityResult> RegisterUserAsync(IdentityUser user, string password)
         {
             try
@@ -92,6 +110,13 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Login a user asynchronously.
+        /// </summary>
+        /// <param name="email">The email of the user.</param>
+        /// <param name="password">The password of the user.</param>
+        /// <returns>The result of the user login operation.</returns>
+        /// <exception cref="Exception">Thrown when there is an error authenticating the user.</exception>
         public async Task<SignInResult> LoginUserAsync(string email, string password)
         {
             try
@@ -116,6 +141,12 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Asynchronously deletes a user account based on their unique identifier.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to delete.</param>
+        /// <returns>True if the user is successfully deleted, otherwise false.</returns>
+        /// <exception cref="Exception">Thrown when the user is not found or there is an error removing them.</exception>
         public async Task<bool> DeleteAccount(string userId)
         {
             try
@@ -133,6 +164,13 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Asynchronously updates a user's email address.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to update.</param>
+        /// <param name="newEmail">The new email address for the user.</param>
+        /// <returns>True if the email is successfully updated, otherwise false.</returns>
+        /// <exception cref="Exception">Thrown when there is an error updating the email.</exception>
         public async Task<bool> UpdateEmail(string userId, string newEmail)
         {
             try
@@ -151,6 +189,14 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Asynchronously updates a user's password.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to update.</param>
+        /// <param name="currentPassword">The user's current password.</param>
+        /// <param name="newPassword">The new password for the user.</param>
+        /// <returns>True if the password is successfully updated, otherwise false.</returns>
+        /// <exception cref="Exception">Thrown when there is an error updating the password.</exception>
         public async Task<bool> UpdatePassword(string userId, string currentPassword, string newPassword)
         {
             try
@@ -168,6 +214,12 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Asynchronously retrieves a user by their email address.
+        /// </summary>
+        /// <param name="email">The email address of the user.</param>
+        /// <returns>The IdentityUser object representing the user with the specified email, or null if not found.</returns>
+        /// <exception cref="Exception">Thrown when there is an error retrieving the user.</exception>
         public async Task<IdentityUser> GetUserByEmail(string email)
         {
             try
@@ -180,59 +232,113 @@ namespace GamesLibrary.Services
             }
         }
 
+        /// <summary>
+        /// Generates a JWT token for the given user.
+        /// </summary>
+        /// <param name="user">The IdentityUser object for which to generate the token.</param>
+        /// <returns>The generated JWT token as a string.</returns>
+        /// <exception cref="Exception">Thrown when there is an error generating the JWT token.</exception>
         public string GenerateJwtToken(IdentityUser user)
         {
             try
             {
+                if (user == null || string.IsNullOrEmpty(user.Email))
+                {
+                    throw new ArgumentException("User or user email is null.");
+                }
+
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
                 var claims = new List<Claim>
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                };
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
                 var token = new JwtSecurityToken(_configuration["Jwt:Issuer"],
-                  _configuration["Jwt:Issuer"],
-                  claims,
-                  expires: DateTime.Now.AddMinutes(120),
-                  signingCredentials: credentials);
+                    _configuration["Jwt:Issuer"],
+                    claims,
+                    expires: DateTime.Now.AddMinutes(120),
+                    signingCredentials: credentials);
 
                 return new JwtSecurityTokenHandler().WriteToken(token);
             }
             catch (Exception ex)
             {
-                throw new Exception(UNKNOWN, ex);
+                throw new Exception("Unknown Error!", ex);
             }
         }
 
-        // Add this method to get the URL in the service
-        public string GetResetPasswordUrl(string email, string resetPasswordToken, IUrlHelper urlHelper)
-        {
-            try
-            {
-                return urlHelper.Action("ResetPassword", "User", new { email, token = resetPasswordToken }, urlHelper.ActionContext.HttpContext.Request.Scheme);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(UNKNOWN, ex);
-            }
-        }
 
-        public async Task SendPasswordResetEmail(string email, string resetPasswordToken, IUrlHelper urlHelper)
+        /// <summary>
+        /// Gets the URL for password reset, which includes a reset token for the user.
+        /// </summary>
+        /// <param name="email">The email address of the user requesting the password reset.</param>
+        /// <param name="resetPasswordToken">The reset password token associated with the user.</param>
+        /// <returns>The reset password URL as a string.</returns>
+        /// <exception cref="Exception">Thrown when there is an error generating the URL.</exception>
+        public async Task SendPasswordResetEmail(string email, string resetPasswordToken)
         {
             try
             {
-                var resetUrl = GetResetPasswordUrl(email, resetPasswordToken, urlHelper);
+                var resetUrl = GetResetPasswordUrl(email, resetPasswordToken);
                 var emailMessage = $"Please click the link below to reset your password: \n\n{resetUrl}";
 
                 await _emailSender.SendEmailAsync(email, "Reset Password", emailMessage);
             }
             catch (Exception ex)
             {
-                throw new Exception(EMAIL.ERROR_SENDING, ex);
+                throw new Exception("Error sending email.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously sends a password reset email to the user.
+        /// </summary>
+        /// <param name="email">The email address of the user to whom the password reset email will be sent.</param>
+        /// <param name="resetPasswordToken">The reset password token associated with the user.</param>
+        /// <returns>The task representing the asynchronous operation.</returns>
+        /// <exception cref="Exception">Thrown when there is an error sending the password reset email.</exception>
+        public string GetResetPasswordUrl(string email, string resetPasswordToken)
+        {
+            try
+            {
+                return $"https://localhost:44362/api/User/reset-password?email={email}&token={resetPasswordToken}";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Unknown Error!", ex);
+            }
+        }
+
+
+        /// <summary>
+        /// Asynchronously resets the password for the specified user using the provided token and new password.
+        /// </summary>
+        /// <param name="user">The IdentityUser object for which to reset the password.</param>
+        /// <param name="token">The password reset token.</param>
+        /// <param name="newPassword">The new password to set for the user.</param>
+        /// <returns>The result of the password reset operation.</returns>
+        /// <exception cref="Exception">Thrown when there is an error resetting the password.</exception>
+        public async Task<IdentityResult> ResetPasswordAsync(IdentityUser user, string token, string newPassword)
+        {
+            try
+            {
+                // Validate the user and token
+                if (user == null || string.IsNullOrEmpty(token) || string.IsNullOrEmpty(newPassword))
+                {
+                    throw new ArgumentException("Invalid user, token, or newPassword.");
+                }
+
+                // Reset the user's password using the UserManager
+                var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error resetting password.", ex);
             }
         }
     }

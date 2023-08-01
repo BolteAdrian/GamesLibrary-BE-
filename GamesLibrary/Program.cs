@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using GamesLibrary.Services;
+using GamesLibrary.DataAccessLayer.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
 builder.Configuration.AddJsonFile("appsettings.json"); // Add this line to load appsettings.json
-var config = builder.Configuration.Get<EmailConfiguration>(); // Read the EmailConfiguration
 
 // Add services to the container.
 builder.Services.AddDbContext<GamesLibraryDbContext>(options =>
@@ -40,13 +40,14 @@ builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PurchaseService>();
 
-builder.Services.AddSingleton<EmailConfiguration>(config); // Register EmailConfiguration
+builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration")); // Register EmailConfiguration
 builder.Services.AddTransient<IEmailSender, EmailSender>(); // Register EmailSender
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
 var app = builder.Build();
 
