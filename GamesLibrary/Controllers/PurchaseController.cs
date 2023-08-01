@@ -2,6 +2,7 @@
 using GamesLibrary.DataAccessLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace GamesLibrary.Controllers
 {
@@ -29,8 +30,15 @@ namespace GamesLibrary.Controllers
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult GetAllPurchases()
         {
-            var purchases = _purchaseService.GetAllPurchases();
-            return Ok(purchases);
+            try
+            {
+                var purchases = _purchaseService.GetAllPurchases();
+                return Ok(purchases);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -47,12 +55,22 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public IActionResult GetPurchaseById(int id)
         {
-            var purchase = _purchaseService.GetPurchaseById(id);
-            if (purchase == null)
+            try
             {
-                return NotFound();
-            }
+                if (id <= 0)
+                {
+                return BadRequest("Invalid ID.");
+                }
+
+            var purchase = _purchaseService.GetPurchaseById(id);
+
             return Ok(purchase);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -69,12 +87,23 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public IActionResult GetPurchasesByUserId(string userId)
         {
-            var purchases = _purchaseService.GetPurchasesByUserId(userId);
-            if (purchases.Count == 0)
+            try
             {
-                return NotFound();
+                if (userId == null)
+                {
+                return BadRequest("Invalid ID.");
+                }
+                var purchases = _purchaseService.GetPurchasesByUserId(userId);
+                if (purchases.Count == 0)
+                {
+                    return NotFound();
+                }
+                return Ok(purchases);
             }
-            return Ok(purchases);
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -91,8 +120,15 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public IActionResult AddPurchase([FromBody] Purchase purchase)
         {
-            _purchaseService.AddPurchase(purchase);
-            return CreatedAtAction(nameof(GetPurchaseById), new { id = purchase.Id }, purchase);
+            try
+            {
+                _purchaseService.AddPurchase(purchase);
+                return CreatedAtAction(nameof(GetPurchaseById), new { id = purchase.Id }, purchase);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -105,21 +141,35 @@ namespace GamesLibrary.Controllers
         /// </remarks>
         /// <returns>
         /// If successful, returns a NoContent response.
-        /// If the provided id invalid returns a BadRequest response.
+        /// If the provided id is invalid, returns a BadRequest response.
         /// </returns>
         [HttpPut("{id}")]
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult UpdatePurchase(int id, [FromBody] Purchase purchase)
         {
-            if (id<=0)
+            try
             {
-                return BadRequest();
+                if (purchase == null)
+                {
+                return BadRequest("Invalid data received.");
+                }
+
+                if (id <= 0)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+
+                _purchaseService.UpdatePurchase(id,purchase);
+                return NoContent();
             }
-
-            purchase.Id = id;
-
-            _purchaseService.UpdatePurchase(purchase);
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the game.");
+            }
         }
 
         /// <summary>
@@ -137,14 +187,21 @@ namespace GamesLibrary.Controllers
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult DeletePurchase(int id)
         {
-            var purchase = _purchaseService.GetPurchaseById(id);
-            if (purchase == null)
+            try
             {
-                return NotFound();
-            }
+                if (id <= 0)
+                {
+                return BadRequest("Invalid ID.");
+                }
 
-            _purchaseService.DeletePurchase(id);
-            return NoContent();
+                _purchaseService.DeletePurchase(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
+

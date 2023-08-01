@@ -3,6 +3,7 @@ using GamesLibrary.DataAccessLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
 using GamesLibrary.DataAccessLayer.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace GamesLibrary.Controllers
 {
@@ -24,14 +25,27 @@ namespace GamesLibrary.Controllers
         /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// A list of all games if successful, otherwise an error response.
+        /// A list of all games if successful, otherwise a NotFound response.
         /// </returns>
         [HttpGet]
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult GetAllGames()
         {
-            var games = _gameService.GetAllGames();
-            return Ok(games);
+            try
+            {
+                var games = _gameService.GetAllGames();
+
+                if (games == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(games);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -39,13 +53,25 @@ namespace GamesLibrary.Controllers
         /// </summary>
         /// <param name="options">The pagination and search options.</param>
         /// <returns>
-        /// A paginated list of games if successful, otherwise an error response.
+        /// A paginated list of games if successful, otherwise a NotFound response.
         /// </returns>
         [HttpGet("paginated")]
         public IActionResult GetAllGamesPaginated([FromQuery] PaginationAndSearchOptions options)
         {
-            var games = _gameService.GetAllGamesPaginated(options);
-            return Ok(games);
+            try
+            {
+                var games = _gameService.GetAllGamesPaginated(options);
+
+                if (games == null)
+                {
+                    return NotFound();
+                }
+                return Ok(games);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -58,12 +84,20 @@ namespace GamesLibrary.Controllers
         [HttpGet("{id}")]
         public IActionResult GetGameById(int id)
         {
-            var game = _gameService.GetGameById(id);
-            if (game == null)
+            try
             {
-                return NotFound();
+                if (id <= 0)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+                var game = _gameService.GetGameById(id);
+
+                return Ok(game);
             }
-            return Ok(game);
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -80,36 +114,56 @@ namespace GamesLibrary.Controllers
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult AddGame([FromBody] Game game)
         {
-            _gameService.AddGame(game);
-            return CreatedAtAction(nameof(GetGameById), new { id = game.Id }, game);
+            try
+            {
+                _gameService.AddGame(game);
+                return CreatedAtAction(nameof(GetGameById), new { id = game.Id }, game);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
-        /// Updates an existing game.
+        /// Update an existing Game in the database.
         /// </summary>
-        /// <param name="id">The unique identifier of the game to update.</param>
-        /// <param name="game">The updated game information.</param>
-        /// <remarks>
-        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
-        /// </remarks>
-        /// <returns>
-        /// If successful, returns a NoContent response.
-        /// If the provided id invalid returns a BadRequest response.
-        /// </returns>
+        /// <param name="id">The ID of the Game to be updated.</param>
+        /// <param name="game">The Game object containing the updated data.</param>
+        /// <returns>Returns a status code indicating the result of the update operation.</returns>
+        /// <response code="204">The Game was successfully updated.</response>
+        /// <response code="400">Bad request. The provided ID is invalid or the data received is invalid.</response>
+        /// <response code="404">The Game with the specified ID was not found.</response>
+        /// <response code="500">An error occurred while updating the game in the database.</response>
         [HttpPut("{id}")]
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult UpdateGame(int id, [FromBody] Game game)
         {
-            if (id <= 0)
+            try
             {
-                return BadRequest();
+                if (game == null)
+                {
+                return BadRequest("Invalid data received.");
+                }
+
+                if (id <= 0)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+
+                _gameService.UpdateGame(id, game);
+                return NoContent();
             }
-
-            game.Id = id;
-
-            _gameService.UpdateGame(game);
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the game.");
+            }
         }
+
 
         /// <summary>
         /// Deletes a game by its unique identifier.
@@ -126,14 +180,21 @@ namespace GamesLibrary.Controllers
         [Authorize(Policy = "ManagerOnly")]
         public IActionResult DeleteGame(int id)
         {
-            var game = _gameService.GetGameById(id);
-            if (game == null)
+            try
             {
-                return NotFound();
-            }
+                if (id <= 0)
+                {
+                return BadRequest("Invalid ID.");
+                }
 
-            _gameService.DeleteGame(id);
-            return NoContent();
+                _gameService.DeleteGame(id);
+                return NoContent();
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

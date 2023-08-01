@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using GamesLibrary.DataAccessLayer.Models;
 using GamesLibrary.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using GamesLibrary.DataAccessLayer.Interfaces;
 
 namespace GamesLibrary.Controllers
 {
@@ -105,7 +105,7 @@ namespace GamesLibrary.Controllers
         /// If unsuccessful, returns a BadRequest response with the message "Invalid login attempt."
         /// </returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] Login model)
         {
             var result = await _userService.LoginUserAsync(model.Email, model.Password);
             if (result.Succeeded)

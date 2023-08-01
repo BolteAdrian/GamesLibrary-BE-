@@ -2,6 +2,8 @@
 using GamesLibrary.DataAccessLayer.Interfaces;
 using GamesLibrary.DataAccessLayer.Models;
 using GamesLibrary.Utils.Constants;
+using System.ComponentModel.DataAnnotations;
+using System.Data.Entity.Infrastructure;
 
 namespace GamesLibrary.Services
 {
@@ -114,7 +116,7 @@ namespace GamesLibrary.Services
         /// </summary>
         /// <param name="id">The unique identifier of the game.</param>
         /// <returns>The Game object if found, otherwise throws an exception.</returns>
-
+        /// <exception cref="Exception">Thrown when the game with the specified ID is not found or there is an error retrieving the game.</exception>
         public Game GetGameById(int id)
         {
             try
@@ -140,13 +142,13 @@ namespace GamesLibrary.Services
         /// <exception cref="Exception">Thrown when there is an error saving the game to the database.</exception>
         public void AddGame(Game game)
         {
-            if (game == null)
-            {
-                throw new ArgumentNullException(nameof(game), ResponseConstants.GAME.NOT_FOUND);
-            }
-
             try
             {
+                if (game == null)
+                {
+                throw new ArgumentNullException(nameof(game), ResponseConstants.GAME.NOT_FOUND);
+                }
+
                 _dbContext.Games.Add(game);
                 _dbContext.SaveChanges();
             }
@@ -155,29 +157,42 @@ namespace GamesLibrary.Services
                 throw new Exception(ResponseConstants.GAME.NOT_SAVED, ex);
             }
         }
+
         /// <summary>
         /// Update an existing Game in the database.
         /// </summary>
-        /// <param name="game">The Game object to be updated.</param>
+        /// <param name="id">The ID of the Game to be updated.</param>
+        /// <param name="game">The Game object containing the updated data.</param>
         /// <exception cref="ArgumentNullException">Thrown when the game object is null.</exception>
-        /// <exception cref="Exception">Thrown when there is an error updating the game in the database.</exception>
-        public void UpdateGame(Game game)
+        /// <exception cref="Exception">Thrown when the game with the specified ID is not found or there is an error updating the game in the database.</exception>
+        public void UpdateGame(int id, Game game)
         {
-            if (game == null)
-            {
-                throw new ArgumentNullException(nameof(game), ResponseConstants.GAME.NOT_FOUND);
-            }
-
             try
             {
-                _dbContext.Games.Update(game);
+                var existingGame = _dbContext.Games.Find(id);
+
+                if (existingGame == null)
+                {
+                    throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id));
+                }
+
+                existingGame.Title = game.Title;
+                existingGame.Description = game.Description;
+                existingGame.ReleaseDate = game.ReleaseDate;
+                existingGame.Genre = game.Genre;
+                existingGame.Developer = game.Developer;
+                existingGame.Platform = game.Platform;
+                existingGame.Price = game.Price;
+
                 _dbContext.SaveChanges();
+
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
-                throw new Exception(ResponseConstants.GAME.ERROR_UPDATING, ex);
+                throw new Exception(string.Format(ResponseConstants.GAME.ERROR_UPDATING, id), ex);
             }
         }
+
 
         /// <summary>
         /// Delete a Game from the database based on its unique identifier.
@@ -189,6 +204,7 @@ namespace GamesLibrary.Services
             try
             {
                 var game = _dbContext.Games.Find(id);
+
                 if (game == null)
                 {
                     throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id));

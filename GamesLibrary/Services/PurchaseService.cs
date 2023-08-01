@@ -1,8 +1,7 @@
 ﻿using GamesLibrary.DataAccessLayer.Data;
-using GamesLibrary.DataAccessLayer.Interfaces;
 using GamesLibrary.DataAccessLayer.Models;
 using GamesLibrary.Utils.Constants;
-using static GamesLibrary.Utils.Constants.ResponseConstants;
+using Microsoft.EntityFrameworkCore;
 
 namespace GamesLibrary.Services
 {
@@ -98,26 +97,32 @@ namespace GamesLibrary.Services
         }
 
         /// <summary>
-        /// Update an existing purchase in the database.
+        /// Update an existing Purchase in the database.
         /// </summary>
-        /// <param name="purchase">The Purchase object to be updated.</param>
+        /// <param name="id">The ID of the Purchase to be updated.</param>
+        /// <param name="purchase">The Purchase object containing the updated data.</param>
         /// <exception cref="ArgumentNullException">Thrown when the purchase object is null.</exception>
-        /// <exception cref="Exception">Thrown when there is an error updating the purchase in the database.</exception>
-        public void UpdatePurchase(Purchase purchase)
+        /// <exception cref="Exception">Thrown when the purchase with the specified ID is not found or there is an error updating the purchase in the database.</exception>
+        public void UpdatePurchase(int id,Purchase purchase)
         {
-            if (purchase == null)
-            {
-                throw new ArgumentNullException(nameof(purchase), ResponseConstants.UNKNOWN);
-            }
-
             try
             {
-                _dbContext.Purchases.Update(purchase);
+                var existingPurchase = _dbContext.Purchases.Find(id);
+
+                if (existingPurchase == null)
+                {
+                    throw new Exception(string.Format(ResponseConstants.PURCHASE.NOT_FOUND, id));
+                }
+
+                existingPurchase.UserId = purchase.UserId;
+                existingPurchase.PurchaseDate = purchase.PurchaseDate;
+                existingPurchase.GameId = purchase.GameId;
+
                 _dbContext.SaveChanges();
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
-                throw new Exception(ResponseConstants.PURCHASE.ERROR_UPDATING, ex);
+                throw new Exception(string.Format(ResponseConstants.PURCHASE.ERROR_UPDATING, id), ex);
             }
         }
 
