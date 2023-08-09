@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GamesLibrary.DataAccessLayer.Models;
+using GamesLibrary.Repository.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
 using Microsoft.EntityFrameworkCore;

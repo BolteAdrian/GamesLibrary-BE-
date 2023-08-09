@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GamesLibrary.DataAccessLayer.Interfaces;
+using GamesLibrary.Repository.Interfaces;
 
 namespace GamesLibrary.Controllers
 {
@@ -39,8 +39,20 @@ namespace GamesLibrary.Controllers
         [Authorize(Policy = "ManagerOnly")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var users = await _userService.GetAllUsers();
-            return Ok(users);
+            try
+            {
+                var users = await _userService.GetAllUsers();
+
+                if (users == null)
+                {
+                    return NotFound();
+                }
+                return Ok(users);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -57,12 +69,21 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public async Task<IActionResult> GetUserById(string id)
         {
-            var user = await _userService.GetUserById(id);
-            if (user == null)
+            try
             {
-                return NotFound();
-            }
+                if (id == null)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+
+                var user = await _userService.GetUserById(id);
+
             return Ok(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -74,26 +95,33 @@ namespace GamesLibrary.Controllers
         /// If unsuccessful, returns the errors in a BadRequest response.
         /// </returns>
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] Register model)
+        public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            var user = new IdentityUser
+            try
             {
-                UserName = model.UserName,
-                Email = model.Email,
-            };
+                var user = new IdentityUser
+                {
+                    UserName = model.UserName,
+                    Email = model.Email,
+                };
 
-            var password = model.Password;
+                var password = model.Password;
 
-            var result = await _userService.RegisterUserAsync(user, password);
+                var result = await _userService.RegisterUserAsync(user, password);
 
-            if (result.Succeeded)
-            {
-                await _signInManager.SignInAsync(user, isPersistent: false);
+                if (result.Succeeded)
+                {
+                    await _signInManager.SignInAsync(user, isPersistent: false);
 
-                return Ok("Registration successful.");
+                    return Ok("Registration successful.");
+                }
+
+                return BadRequest(result.Errors);
             }
-
-            return BadRequest(result.Errors);
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -105,15 +133,22 @@ namespace GamesLibrary.Controllers
         /// If unsuccessful, returns a BadRequest response with the message "Invalid login attempt."
         /// </returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] Login model)
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            var result = await _userService.LoginUserAsync(model.Email, model.Password);
-            if (result.Succeeded)
+            try
             {
-                return Ok("Login successful.");
-            }
+                var result = await _userService.LoginUserAsync(model.Email, model.Password);
+                if (result.Succeeded)
+                {
+                    return Ok("Login successful.");
+                }
 
-            return BadRequest("Invalid login attempt.");
+                return BadRequest("Invalid login attempt.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -131,13 +166,24 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteAccount(string userId)
         {
-            var result = await _userService.DeleteAccount(userId);
-            if (result)
+            try
             {
-                return Ok("Account deleted successfully.");
-            }
+                if (userId == null)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+                var result = await _userService.DeleteAccount(userId);
+                if (result)
+                {
+                    return Ok("Account deleted successfully.");
+                }
 
-            return BadRequest("Failed to delete account.");
+                return BadRequest("Failed to delete account.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -156,13 +202,24 @@ namespace GamesLibrary.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateEmail(string userId, [FromBody] string newEmail)
         {
-            var result = await _userService.UpdateEmail(userId, newEmail);
-            if (result)
+            try
             {
-                return Ok("Email updated successfully.");
-            }
+                if (userId == null)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+                var result = await _userService.UpdateEmail(userId, newEmail);
+                if (result)
+                {
+                    return Ok("Email updated successfully.");
+                }
 
-            return BadRequest("Failed to update email.");
+                return BadRequest("Failed to update email.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -179,15 +236,26 @@ namespace GamesLibrary.Controllers
         /// </returns>
         [HttpPut("update-password/{userId}")]
         [Authorize]
-        public async Task<IActionResult> UpdatePassword(string userId, [FromBody] UpdatePassword model)
+        public async Task<IActionResult> UpdatePassword(string userId, [FromBody] UpdatePasswordDto model)
         {
-            var result = await _userService.UpdatePassword(userId, model.CurrentPassword, model.NewPassword);
-            if (result)
+            try
             {
-                return Ok("Password updated successfully.");
-            }
+                if (userId == null)
+                {
+                    return BadRequest("Invalid ID.");
+                }
+                var result = await _userService.UpdatePassword(userId, model.CurrentPassword, model.NewPassword);
+                if (result)
+                {
+                    return Ok("Password updated successfully.");
+                }
 
-            return BadRequest("Failed to update password.");
+                return BadRequest("Failed to update password.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -203,6 +271,11 @@ namespace GamesLibrary.Controllers
         {
             try
             {
+                if (email == null)
+                {
+                    return BadRequest("Invalid Email.");
+                }
+
                 var user = await _userService.GetUserByEmail(email);
                 if (user == null)
                     return BadRequest("User not found");
@@ -238,6 +311,11 @@ namespace GamesLibrary.Controllers
         {
             try
             {
+                if (email == null)
+                {
+                    return BadRequest("Invalid Email.");
+                }
+
                 // Check the validity of the JWT token
                 var user = await _userService.GetUserByEmail(email);
                 if (user == null)

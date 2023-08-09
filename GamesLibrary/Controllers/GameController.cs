@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GamesLibrary.DataAccessLayer.Models;
+using GamesLibrary.Repository.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
-using GamesLibrary.DataAccessLayer.Interfaces;
+using GamesLibrary.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace GamesLibrary.Controllers
@@ -56,7 +56,7 @@ namespace GamesLibrary.Controllers
         /// A paginated list of games if successful, otherwise a NotFound response.
         /// </returns>
         [HttpGet("paginated")]
-        public IActionResult GetAllGamesPaginated([FromQuery] PaginationAndSearchOptions options)
+        public IActionResult GetAllGamesPaginated([FromQuery] PaginationAndSearchOptionsDto options)
         {
             try
             {
@@ -130,6 +130,9 @@ namespace GamesLibrary.Controllers
         /// </summary>
         /// <param name="id">The ID of the Game to be updated.</param>
         /// <param name="game">The Game object containing the updated data.</param>
+        /// <remarks>
+        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
+        /// </remarks>
         /// <returns>Returns a status code indicating the result of the update operation.</returns>
         /// <response code="204">The Game was successfully updated.</response>
         /// <response code="400">Bad request. The provided ID is invalid or the data received is invalid.</response>

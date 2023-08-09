@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Options;
 using MimeKit;
 using MailKit.Net.Smtp;
-using GamesLibrary.DataAccessLayer.Contacts;
+using GamesLibrary.Repository.Contacts;
 using GamesLibrary.Utils.Constants;
 
 namespace GamesLibrary.Services
 {
-    public class EmailSender : IEmailSender
+    public class EmailSender : IEmailSenderDto
     {
-        private readonly EmailConfiguration _emailConfig;
+        private readonly EmailConfigurationDto _emailConfig;
 
-        public EmailSender(IOptions<EmailConfiguration> emailConfig)
+        public EmailSender(IOptions<EmailConfigurationDto> emailConfig)
         {
             _emailConfig = emailConfig?.Value ?? throw new ArgumentNullException(nameof(emailConfig), ResponseConstants.EMAIL.CONFIG_NULL);
         }

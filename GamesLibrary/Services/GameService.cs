@@ -1,6 +1,6 @@
-﻿using GamesLibrary.DataAccessLayer.Data;
-using GamesLibrary.DataAccessLayer.Interfaces;
-using GamesLibrary.DataAccessLayer.Models;
+﻿using GamesLibrary.Repository.Data;
+using GamesLibrary.Repository.Interfaces;
+using GamesLibrary.Repository.Models;
 using GamesLibrary.Utils.Constants;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity.Infrastructure;
@@ -39,7 +39,7 @@ namespace GamesLibrary.Services
         /// <param name="options">The pagination and search options.</param>
         /// <returns>A list of games based on the provided pagination and search criteria.</returns>
         /// <exception cref="Exception">Thrown when there is an error retrieving the games.</exception>
-        public List<Game> GetAllGamesPaginated(PaginationAndSearchOptions options)
+        public List<Game> GetAllGamesPaginated(PaginationAndSearchOptionsDto options)
         {
             try
             {

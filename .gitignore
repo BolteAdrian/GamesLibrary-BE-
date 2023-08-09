@@ -48,3 +48,5 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Fody - auto-generated XML schema
+FodyWeavers.xsd

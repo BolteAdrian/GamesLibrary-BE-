@@ -1,5 +1,5 @@
-﻿using GamesLibrary.DataAccessLayer.Data;
-using GamesLibrary.DataAccessLayer.Models;
+﻿using GamesLibrary.Repository.Data;
+using GamesLibrary.Repository.Models;
 using GamesLibrary.Utils.Constants;
 using Microsoft.EntityFrameworkCore;
 

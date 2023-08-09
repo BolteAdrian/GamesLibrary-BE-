@@ -21,6 +21,14 @@
             public const string ERROR_DELETING = "Could not delete game!";
         }
 
+        public static class REVIEW
+        {
+            public const string NOT_FOUND = "Review not found!";
+            public const string NOT_SAVED = "Could not save review!";
+            public const string ERROR_UPDATING = "Could not update review!";
+            public const string ERROR_DELETING = "Could not delete review!";
+        }
+
         public static class USER
         {
             public const string NOT_SAVED = "Could Not Register User!";
