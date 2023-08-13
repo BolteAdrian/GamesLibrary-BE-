@@ -37,7 +37,6 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-builder.Services.AddScoped<SalesPredictionService>();
 builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PurchaseService>();
