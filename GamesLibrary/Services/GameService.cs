@@ -182,6 +182,7 @@ namespace GamesLibrary.Services
                 existingGame.Genre = game.Genre;
                 existingGame.Developer = game.Developer;
                 existingGame.Platform = game.Platform;
+                existingGame.PictureURL = game.PictureURL;
                 existingGame.Price = game.Price;
 
                 _dbContext.SaveChanges();

@@ -62,7 +62,7 @@ namespace GamesLibrary.Controllers
         {
             try
             {
-                if (gameId >= 0)
+                if (gameId <= 0)
                 {
                     return BadRequest("Invalid ID.");
                 }

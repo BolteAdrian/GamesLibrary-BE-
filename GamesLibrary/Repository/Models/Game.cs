@@ -14,6 +14,8 @@ namespace GamesLibrary.Repository.Models
         [Required]
         public string Developer { get; set; }
         [Required]
+        public string PictureURL { get; set; }
+        [Required]
         public string Platform { get; set; }
         [Required]
         public decimal Price { get; set; }

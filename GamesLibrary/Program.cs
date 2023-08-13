@@ -37,9 +37,11 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
+builder.Services.AddScoped<SalesPredictionService>();
 builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PurchaseService>();
+builder.Services.AddScoped<ReviewService>();
 
 builder.Services.Configure<EmailConfigurationDto>(builder.Configuration.GetSection("EmailConfiguration")); // Register EmailConfiguration
 builder.Services.AddTransient<IEmailSenderDto, EmailSender>(); // Register EmailSender

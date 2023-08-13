@@ -138,6 +138,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "EU",
                                 Platform = "PlayStation 5",
+                                PictureURL="url/picture",
                                 Price = 59.99m
                             },
                             new Game
@@ -149,6 +150,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "Rockstar Games",
                                 Platform = "PlayStation 4, Xbox One, PC",
+                                PictureURL = "url/picture",
                                 Price = 49.99m
                             },
                             new Game
@@ -160,6 +162,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action, Adventure",
                                 Developer = "Nintendo",
                                 Platform = "Nintendo Switch, Wii U",
+                                PictureURL = "url/picture",
                                 Price = 49.99m
                             },
                             new Game
@@ -171,6 +174,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "RPG",
                                 Developer = "CD Projekt Red",
                                 Platform = "PlayStation 4, Xbox One, PC",
+                                PictureURL = "url/picture",
                                 Price = 39.99m
                             },
                             new Game
@@ -182,6 +186,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "Epic Games",
                                 Platform = "PlayStation 4, Xbox One, PC, Nintendo Switch, Mobile",
+                                PictureURL = "url/picture",
                                 Price = 0.00m
                             },
                             new Game
@@ -193,6 +198,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "Infinity Ward, Raven Software",
                                 Platform = "PlayStation 4, Xbox One, PC",
+                                PictureURL = "url/picture",
                                 Price = 0.00m
                             },
                             new Game
@@ -204,6 +210,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Sports",
                                 Developer = "EA Vancouver",
                                 Platform = "PlayStation 4, Xbox One, PC, Nintendo Switch",
+                                PictureURL = "url/picture",
                                 Price = 59.99m
                             },
                             new Game
@@ -215,6 +222,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action, RPG",
                                 Developer = "Ubisoft Montreal",
                                 Platform = "PlayStation 4, Xbox One, PC, PlayStation 5, Xbox Series X/S",
+                                PictureURL = "url/picture",
                                 Price = 49.99m
                             },
                             new Game
@@ -226,6 +234,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Adventure",
                                 Developer = "Mojang Studios",
                                 Platform = "PlayStation 4, Xbox One, PC, Nintendo Switch, Mobile",
+                                PictureURL = "url/picture",
                                 Price = 19.99m
                             },
                             new Game
@@ -237,6 +246,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "Santa Monica Studio",
                                 Platform = "PlayStation 4",
+                                PictureURL = "url/picture",
                                 Price = 39.99m
                             },
                             new Game
@@ -248,6 +258,7 @@ namespace GamesLibrary.Repository.Data
                                 Genre = "Action",
                                 Developer = "EU",
                                 Platform = "PlayStation 5",
+                                PictureURL = "url/picture",
                                 Price = 59.99m
                             }
                         );
@@ -269,6 +280,22 @@ namespace GamesLibrary.Repository.Data
                                 GameId = 5,
                                 Rating = 5,
                                 Comment = "Absolutely loved it!"
+                            },
+                            new Review
+                            {
+                                Id = 3,
+                                UserId = "630066b6-d090-44f6-8c18-07ac9ca6cb6f",
+                                GameId = 1,
+                                Rating = 5,
+                                Comment = "Absolutely loved it!"
+                            },
+                            new Review
+                            {
+                                Id = 4,
+                                UserId = "630066b6-d090-44f6-8c18-07ac9ca6cb6f",
+                                GameId = 2,
+                                Rating = 1,
+                                Comment = "WEEEAK !!"
                             }
                         );
 

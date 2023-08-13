@@ -23,7 +23,13 @@ namespace GamesLibrary.Services
         {
             try
             {
-                return _dbContext.Purchases.ToList();
+                var purchases =  _dbContext.Purchases.ToList();
+
+                if (purchases == null)
+                {
+                    throw new Exception(ResponseConstants.PURCHASE.NOT_FOUND);
+                }
+                return purchases;
             }
             catch (Exception ex)
             {
