@@ -2,7 +2,7 @@
 using MimeKit;
 using MailKit.Net.Smtp;
 using GamesLibrary.Repository.Contacts;
-using GamesLibrary.Utils.Constants;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Services
 {
@@ -12,7 +12,7 @@ namespace GamesLibrary.Services
 
         public EmailSender(IOptions<EmailConfigurationDto> emailConfig)
         {
-            _emailConfig = emailConfig?.Value ?? throw new ArgumentNullException(nameof(emailConfig), ResponseConstants.EMAIL.CONFIG_NULL);
+            _emailConfig = emailConfig?.Value ?? throw new ArgumentNullException(nameof(emailConfig), EMAIL.CONFIG_NULL);
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace GamesLibrary.Services
         {
             if (string.IsNullOrEmpty(email))
             {
-                throw new ArgumentNullException(nameof(email), ResponseConstants.EMAIL.EMAIL_NULL_OR_EMPTY);
+                throw new ArgumentNullException(nameof(email), EMAIL.EMAIL_NULL_OR_EMPTY);
             }
 
             try
@@ -49,7 +49,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.EMAIL.ERROR_SENDING, ex);
+                throw new Exception(EMAIL.ERROR_SENDING, ex);
             }
         }
     }

@@ -3,8 +3,7 @@ using GamesLibrary.Repository.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
 using GamesLibrary.Repository.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Controllers
 {
@@ -20,13 +19,15 @@ namespace GamesLibrary.Controllers
         }
 
         /// <summary>
-        /// Retrieves all reviews.
+        /// Retrieves all reviews from the database.
         /// </summary>
         /// <remarks>
         /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// A list of all reviews if successful, otherwise a NotFound response.
+        /// Returns a list of all reviews if successful.
+        /// If no reviews are found, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpGet]
         [Authorize(Policy = "ManagerOnly")]
@@ -38,24 +39,25 @@ namespace GamesLibrary.Controllers
 
                 if (reviews == null)
                 {
-                    return NotFound();
+                    return NotFound(REVIEW.NOT_FOUND);
                 }
 
                 return Ok(reviews);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.NOT_FOUND, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Retrieves a paginated list of reviews based on the provided search and pagination options.
+        /// Retrieves a paginated list of reviews of a game based on the provided search and pagination options.
         /// </summary>
-        /// <param name="gameId">The ID of the Game that have the reviews.</param>
         /// <param name="options">The pagination and search options.</param>
         /// <returns>
-        /// A paginated list of reviews if successful, otherwise a NotFound response.
+        /// Returns a paginated list of reviews if successful.
+        /// If no reviews are found, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpGet("paginated/{gameId}")]
         public IActionResult GetAllReviewsByGamePaginated(int gameId, [FromQuery] PaginationAndSearchOptionsDto options)
@@ -64,29 +66,34 @@ namespace GamesLibrary.Controllers
             {
                 if (gameId <= 0)
                 {
-                    return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
                 }
 
                 var reviews = _reviewService.GetAllReviewsByGamePaginated(gameId, options);
 
                 if (reviews == null)
                 {
-                    return NotFound();
+                    return NotFound(GAME.NOT_FOUND);
                 }
+
                 return Ok(reviews);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.NOT_FOUND, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Retrieves a reviews by its unique identifier.
+        /// Retrieves a review by its unique identifier.
         /// </summary>
-        /// <param name="id">The unique identifier of the reviews.</param>
+        /// <param name="id">The unique identifier of the review.</param>
         /// <returns>
-        /// The reviews's information if found, otherwise a NotFound response.
+        /// Returns the review's information if found.
+        /// If the provided ID is invalid, returns a BadRequest response with an appropriate message.
+        /// If no review is found with the specified ID, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
+        /// </returns>information if found, otherwise a NotFound response.
         /// </returns>
         [HttpGet("{id}")]
         public IActionResult GetReviewById(int id)
@@ -95,27 +102,34 @@ namespace GamesLibrary.Controllers
             {
                 if (id <= 0)
                 {
-                    return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
                 }
                 var reviews = _reviewService.GetReviewById(id);
 
+                if (reviews == null)
+                {
+                    return NotFound(GAME.NOT_FOUND);
+                }
+
                 return Ok(reviews);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.NOT_FOUND, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Adds a new review.
+        /// Adds a new review to the database.
         /// </summary>
         /// <param name="review">The review information to be added.</param>
         /// <remarks>
-        /// This endpoint requires the user to be authorized.
-        /// </remarks> 
+        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
+        /// </remarks>
         /// <returns>
-        /// If successful, returns a CreatedAtAction response with the URL of the newly created review.
+        /// Returns a CreatedAtAction response with the URL of the newly created review if successful.
+        /// If the provided review data is invalid, returns a BadRequest response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpPost]
         [Authorize]
@@ -123,68 +137,74 @@ namespace GamesLibrary.Controllers
         {
             try
             {
+                if (review == null)
+                {
+                    return BadRequest(INVALID_DATA);
+                }
                 _reviewService.AddReview(review);
+
                 return CreatedAtAction(nameof(GetReviewById), new { id = review.Id }, review);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.NOT_SAVED, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Update an existing Review in the database.
+        /// Updates an existing review's information in the database.
         /// </summary>
-        /// <param name="id">The ID of the Review to be updated.</param>
-        /// <param name="review">The Review object containing the updated data.</param>
+        /// <param name="id">The ID of the review to be updated.</param>
+        /// <param name="review">The updated review information.</param>
         /// <remarks>
-        /// This endpoint requires the user to be authorized.
-        /// </remarks> 
-        /// <returns>Returns a status code indicating the result of the update operation.</returns>
-        /// <response code="204">The Review was successfully updated.</response>
-        /// <response code="400">Bad request. The provided ID is invalid or the data received is invalid.</response>
-        /// <response code="404">The Review with the specified ID was not found.</response>
-        /// <response code="500">An error occurred while updating the review in the database.</response>
+        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
+        /// </remarks>
+        /// <returns>
+        /// Returns a status code indicating the result of the update operation.
+        /// If successful, returns a success message.
+        /// If the provided ID is invalid, returns a BadRequest response.
+        /// If the provided review data is invalid, returns a BadRequest response.
+        /// If the review with the specified ID is not found, returns a NotFound response.
+        /// If an error occurs during the update operation, returns a 500 Internal Server Error response with an error message.
+        /// </returns>
         [HttpPut("{id}")]
         [Authorize]
         public IActionResult UpdateReview(int id, [FromBody] Review review)
         {
             try
             {
-                if (review == null)
-                {
-                return BadRequest("Invalid data received.");
-                }
-
                 if (id <= 0)
                 {
-                    return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
+                }
+
+                if (review == null)
+                {
+                    return BadRequest(INVALID_DATA);
                 }
 
                 _reviewService.UpdateReview(id, review);
-                return NoContent();
+
+                return Ok(new { message = REVIEW.SUCCES_UPDATING });
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
-            }
-            catch (DbUpdateException ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the game.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.ERROR_UPDATING, error = ex.Message });
             }
         }
 
-
         /// <summary>
-        /// Deletes a review by its unique identifier.
+        /// Deletes a review from the database based on its unique identifier.
         /// </summary>
-        /// <param name="id">The unique identifier of the review to delete.</param>
+        /// <param name="id">The unique identifier of the review to be deleted.</param>
         /// <remarks>
-        /// This endpoint requires the user to be authorized.
+        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// If successful, returns a NoContent response.
-        /// If the review to delete is not found, returns a NotFound response.
+        /// Returns a status code indicating the result of the update operation.
+        /// If the provided ID is invalid, returns a BadRequest response with an appropriate message.
+        /// If the review with the specified ID is not found, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpDelete("{id}")]
         [Authorize]
@@ -194,16 +214,16 @@ namespace GamesLibrary.Controllers
             {
                 if (id <= 0)
                 {
-                return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
                 }
 
                 _reviewService.DeleteReview(id);
-                return NoContent();
+                return Ok(new { message = REVIEW.SUCCES_DELETING });
 
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = REVIEW.ERROR_DELETING, error = ex.Message });
             }
         }
     }

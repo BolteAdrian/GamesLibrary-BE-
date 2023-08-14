@@ -1,8 +1,8 @@
 ﻿using GamesLibrary.Repository.Data;
 using GamesLibrary.Repository.Interfaces;
 using GamesLibrary.Repository.Models;
-using GamesLibrary.Utils.Constants;
 using System.Data.Entity.Infrastructure;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Services
 {
@@ -28,7 +28,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.REVIEW.NOT_FOUND, ex);
+                throw new Exception(REVIEW.NOT_FOUND, ex);
             }
         }
 
@@ -64,7 +64,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.REVIEW.NOT_FOUND, ex);
+                throw new Exception(REVIEW.NOT_FOUND, ex);
             }
         }
 
@@ -101,13 +101,13 @@ namespace GamesLibrary.Services
                 var review = _dbContext.Reviews.FirstOrDefault(g => g.Id == id);
                 if (review == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.REVIEW.NOT_FOUND, id));
+                    throw new Exception(string.Format(REVIEW.NOT_FOUND, id));
                 }
                 return review;
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.REVIEW.NOT_FOUND, id), ex);
+                throw new Exception(string.Format(REVIEW.NOT_FOUND, id), ex);
             }
         }
 
@@ -121,17 +121,12 @@ namespace GamesLibrary.Services
         {
             try
             {
-                if (review == null)
-                {
-                throw new ArgumentNullException(nameof(review), ResponseConstants.REVIEW.NOT_FOUND);
-                }
-
                 _dbContext.Reviews.Add(review);
                 _dbContext.SaveChanges();
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.REVIEW.NOT_SAVED, ex);
+                throw new Exception(REVIEW.NOT_SAVED, ex);
             }
         }
 
@@ -150,7 +145,7 @@ namespace GamesLibrary.Services
 
                 if (existingReview == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.REVIEW.NOT_FOUND, id));
+                    throw new Exception(string.Format(REVIEW.NOT_FOUND, id));
                 }
 
                 existingReview.UserId = review.UserId;
@@ -163,7 +158,7 @@ namespace GamesLibrary.Services
             }
             catch (DbUpdateException ex)
             {
-                throw new Exception(string.Format(ResponseConstants.REVIEW.ERROR_UPDATING, id), ex);
+                throw new Exception(string.Format(REVIEW.ERROR_UPDATING, id), ex);
             }
         }
 
@@ -181,7 +176,7 @@ namespace GamesLibrary.Services
 
                 if (review == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.REVIEW.NOT_FOUND, id));
+                    throw new Exception(string.Format(REVIEW.NOT_FOUND, id));
                 }
 
                 _dbContext.Reviews.Remove(review);
@@ -189,7 +184,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.REVIEW.ERROR_DELETING, id), ex);
+                throw new Exception(string.Format(REVIEW.ERROR_DELETING, id), ex);
             }
         }
     }

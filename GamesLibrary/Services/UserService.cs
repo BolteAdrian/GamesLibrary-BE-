@@ -140,6 +140,57 @@ namespace GamesLibrary.Services
         }
 
         /// <summary>
+        /// Changes the role of a user to "Manager" if they do not already have that role.
+        /// </summary>
+        /// <param name="user">The user whose role is being changed.</param>
+        /// <returns>
+        /// Returns an IdentityResult indicating the result of the role change process.
+        /// If the user's current role is already "Manager", throws an exception indicating that the user already has the role.
+        /// If successfully removed from the current role and added to the "Manager" role, returns a success result.
+        /// If an error occurs during role removal or role addition, throws an exception with error details.
+        /// </returns>
+        public async Task<IdentityResult> ChangeUserRoleAsync(string userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new Exception(string.Format(USER.NOT_FOUND, userId));
+                }
+                var currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+                if (currentRole == "Manager")
+                {
+                    throw new Exception(USER.ALREADY_HAS_THE_ROLE);
+                }
+
+                var removeResult = await _userManager.RemoveFromRoleAsync(user, currentRole);
+                if (removeResult.Succeeded)
+                {
+                    var addResult = await _userManager.AddToRoleAsync(user, "Manager");
+                    if (addResult.Succeeded)
+                    {
+                        return addResult;
+                    }
+                    else
+                    {
+                        // Rollback changes if adding new role fails
+                        await _userManager.AddToRoleAsync(user, currentRole);
+                        throw new Exception(string.Join(", ", addResult.Errors));
+                    }
+                }
+                else
+                {
+                    throw new Exception(string.Join(", ", removeResult.Errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(USER.ERROR_CHANGE_ROLE, ex);
+            }
+        }
+
+        /// <summary>
         /// Asynchronously deletes a user account based on their unique identifier.
         /// </summary>
         /// <param name="userId">The unique identifier of the user to delete.</param>
@@ -158,7 +209,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(USER.ERROR_REMOVING_USER, userId), ex);
+                throw new Exception(string.Format(USER.ERROR_DELETING, userId), ex);
             }
         }
 
@@ -271,19 +322,18 @@ namespace GamesLibrary.Services
 
 
         /// <summary>
-        /// Gets the URL for password reset, which includes a reset token for the user.
+        /// Sends a password reset email containing a reset link to the user's email address.
         /// </summary>
         /// <param name="email">The email address of the user requesting the password reset.</param>
         /// <param name="resetPasswordToken">The reset password token associated with the user.</param>
-        /// <returns>The reset password URL as a string.</returns>
-        /// <exception cref="Exception">Thrown when there is an error generating the URL.</exception>
+        /// <returns>A boolean indicating whether the email sending was successful or not.</returns>
+        /// <exception cref="Exception">Thrown when there is an error generating the URL or sending the email.</exception>
         public async Task SendPasswordResetEmail(string email, string resetPasswordToken)
         {
             try
             {
                 var resetUrl = GetResetPasswordUrl(email, resetPasswordToken);
                 var emailMessage = $"Please click the link below to reset your password: \n\n{resetUrl}";
-
                 await _emailSender.SendEmailAsync(email, "Reset Password", emailMessage);
             }
             catch (Exception ex)

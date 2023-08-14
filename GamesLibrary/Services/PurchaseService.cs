@@ -1,7 +1,6 @@
 ﻿using GamesLibrary.Repository.Data;
 using GamesLibrary.Repository.Models;
-using GamesLibrary.Utils.Constants;
-using Microsoft.EntityFrameworkCore;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Services
 {
@@ -15,34 +14,35 @@ namespace GamesLibrary.Services
         }
 
         /// <summary>
-        /// Get all purchases.
+        /// Retrieves all purchases from the database.
         /// </summary>
-        /// <returns>A list of all purchases.</returns>
-        /// <exception cref="Exception">Thrown when there is an error retrieving the purchases.</exception>
+        /// <returns>
+        /// Returns a list of all purchases if successful.
+        /// If an error occurs during processing, throws an exception with an error message.
+        /// </returns>
         public List<Purchase> GetAllPurchases()
         {
             try
             {
                 var purchases =  _dbContext.Purchases.ToList();
 
-                if (purchases == null)
-                {
-                    throw new Exception(ResponseConstants.PURCHASE.NOT_FOUND);
-                }
                 return purchases;
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.UNKNOWN, ex);
+                throw new Exception(ex.Message);
             }
         }
 
         /// <summary>
-        /// Get a purchase by its unique identifier.
+        /// Retrieves a purchase by its unique identifier from the database.
         /// </summary>
         /// <param name="id">The unique identifier of the purchase.</param>
-        /// <returns>The Purchase object if found, otherwise throws an exception.</returns>
-        /// <exception cref="Exception">Thrown when the purchase is not found or there is an error retrieving it.</exception>
+        /// <returns>
+        /// Returns the purchase object if found.
+        /// If the purchase with the specified ID is not found, throws an exception with an appropriate error message.
+        /// If an error occurs during processing, throws an exception with an error message.
+        /// </returns>on cref="Exception">Thrown when the purchase is not found or there is an error retrieving it.</exception>
         public Purchase GetPurchaseById(int id)
         {
             try
@@ -50,13 +50,13 @@ namespace GamesLibrary.Services
                 var purchase = _dbContext.Purchases.FirstOrDefault(p => p.Id == id);
                 if (purchase == null)
                 {
-                    throw new Exception(ResponseConstants.PURCHASE.NOT_FOUND);
+                    throw new Exception(PURCHASE.NOT_FOUND);
                 }
                 return purchase;
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.UNKNOWN, id), ex);
+                throw new Exception(string.Format(PURCHASE.NOT_FOUND, id), ex);
             }
         }
 
@@ -74,7 +74,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.PURCHASE.NOT_FOUND, ex);
+                throw new Exception(PURCHASE.NOT_FOUND, ex);
             }
         }
 
@@ -86,11 +86,6 @@ namespace GamesLibrary.Services
         /// <exception cref="Exception">Thrown when there is an error saving the purchase to the database.</exception>
         public void AddPurchase(Purchase purchase)
         {
-            if (purchase == null)
-            {
-                throw new ArgumentNullException(nameof(purchase), ResponseConstants.UNKNOWN);
-            }
-
             try
             {
                 _dbContext.Purchases.Add(purchase);
@@ -98,7 +93,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.PURCHASE.NOT_SAVED, ex);
+                throw new Exception(PURCHASE.NOT_SAVED, ex);
             }
         }
 
@@ -117,7 +112,7 @@ namespace GamesLibrary.Services
 
                 if (existingPurchase == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.PURCHASE.NOT_FOUND, id));
+                    throw new Exception(string.Format(PURCHASE.NOT_FOUND, id));
                 }
 
                 existingPurchase.UserId = purchase.UserId;
@@ -126,9 +121,9 @@ namespace GamesLibrary.Services
 
                 _dbContext.SaveChanges();
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.PURCHASE.ERROR_UPDATING, id), ex);
+                throw new Exception(string.Format(PURCHASE.ERROR_UPDATING, id), ex);
             }
         }
 
@@ -142,9 +137,10 @@ namespace GamesLibrary.Services
             try
             {
                 var purchase = _dbContext.Purchases.Find(id);
+
                 if (purchase == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.PURCHASE.NOT_FOUND, id));
+                    throw new Exception(string.Format(PURCHASE.NOT_FOUND, id));
                 }
 
                 _dbContext.Purchases.Remove(purchase);
@@ -152,7 +148,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.PURCHASE.ERROR_DELETING, id), ex);
+                throw new Exception(string.Format(PURCHASE.ERROR_DELETING, id), ex);
             }
         }
     }

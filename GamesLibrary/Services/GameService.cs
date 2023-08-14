@@ -1,9 +1,7 @@
 ﻿using GamesLibrary.Repository.Data;
 using GamesLibrary.Repository.Interfaces;
 using GamesLibrary.Repository.Models;
-using GamesLibrary.Utils.Constants;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Entity.Infrastructure;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Services
 {
@@ -17,10 +15,12 @@ namespace GamesLibrary.Services
         }
 
         /// <summary>
-        /// Get all games.
+        /// Retrieves all games from the database.
         /// </summary>
-        /// <returns>A list of all games.</returns>
-        /// <exception cref="Exception">Thrown when there is an error retrieving the games.</exception>
+        /// <returns>
+        /// Returns a list of all games if successful.
+        /// If an error occurs during processing, throws an exception with an error message.
+        /// </returns>
         public List<Game> GetAllGames()
         {
             try
@@ -29,16 +29,18 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.GAME.NOT_FOUND, ex);
+                throw new Exception(ex.Message);
             }
         }
 
         /// <summary>
-        /// Get all games with pagination and search options.
+        /// Retrieves a paginated list of games based on the provided search and pagination options.
         /// </summary>
         /// <param name="options">The pagination and search options.</param>
-        /// <returns>A list of games based on the provided pagination and search criteria.</returns>
-        /// <exception cref="Exception">Thrown when there is an error retrieving the games.</exception>
+        /// <returns>
+        /// Returns a paginated list of games if successful.
+        /// If an error occurs during processing, throws an exception with an error message.
+        /// </returns>
         public List<Game> GetAllGamesPaginated(PaginationAndSearchOptionsDto options)
         {
             try
@@ -79,17 +81,20 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.GAME.NOT_FOUND, ex);
+                throw new Exception(ex.Message);
             }
         }
 
         /// <summary>
-        /// Sort the query based on the provided sort field and sort order.
+        /// Sorts the given query based on the provided sort field and sort order.
         /// </summary>
         /// <param name="query">The query to be sorted.</param>
         /// <param name="sortField">The field to be used for sorting.</param>
         /// <param name="isAscending">True for ascending sorting, false for descending sorting.</param>
-        /// <returns>The sorted query.</returns>
+        /// <returns>
+        /// Returns the sorted query if successful.
+        /// If the provided sort field is not recognized, returns the unchanged query.
+        /// </returns>
         private IQueryable<Game> SortQuery(IQueryable<Game> query, string sortField, bool isAscending)
         {
             switch (sortField.ToLower())
@@ -112,11 +117,14 @@ namespace GamesLibrary.Services
         }
 
         /// <summary>
-        /// Get a Game by its unique identifier.
+        /// Retrieves a game by its unique identifier from the database.
         /// </summary>
         /// <param name="id">The unique identifier of the game.</param>
-        /// <returns>The Game object if found, otherwise throws an exception.</returns>
-        /// <exception cref="Exception">Thrown when the game with the specified ID is not found or there is an error retrieving the game.</exception>
+        /// <returns>
+        /// Returns the game object if found.
+        /// If the game with the specified ID is not found, throws an exception with an appropriate error message.
+        /// If an error occurs during processing, throws an exception with an error message.
+        /// </returns>
         public Game GetGameById(int id)
         {
             try
@@ -124,47 +132,42 @@ namespace GamesLibrary.Services
                 var game = _dbContext.Games.FirstOrDefault(g => g.Id == id);
                 if (game == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id));
+                    throw new Exception(string.Format(GAME.NOT_FOUND, id));
                 }
                 return game;
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id), ex);
+                throw new Exception(string.Format(GAME.NOT_FOUND, id), ex);
             }
         }
 
         /// <summary>
-        /// Add a new Game to the database.
+        /// Adds a new game to the database.
         /// </summary>
-        /// <param name="game">The Game object to be added.</param>
+        /// <param name="game">The game object to be added.</param>
         /// <exception cref="ArgumentNullException">Thrown when the game object is null.</exception>
-        /// <exception cref="Exception">Thrown when there is an error saving the game to the database.</exception>
+        /// <exception cref="Exception">Thrown when an error occurs during saving the game to the database.</exception>
         public void AddGame(Game game)
         {
             try
             {
-                if (game == null)
-                {
-                throw new ArgumentNullException(nameof(game), ResponseConstants.GAME.NOT_FOUND);
-                }
-
                 _dbContext.Games.Add(game);
                 _dbContext.SaveChanges();
             }
             catch (Exception ex)
             {
-                throw new Exception(ResponseConstants.GAME.NOT_SAVED, ex);
+                throw new Exception(GAME.NOT_SAVED, ex);
             }
         }
 
         /// <summary>
-        /// Update an existing Game in the database.
+        /// Updates an existing game in the database.
         /// </summary>
-        /// <param name="id">The ID of the Game to be updated.</param>
-        /// <param name="game">The Game object containing the updated data.</param>
+        /// <param name="id">The ID of the game to be updated.</param>
+        /// <param name="game">The game object containing the updated data.</param>
         /// <exception cref="ArgumentNullException">Thrown when the game object is null.</exception>
-        /// <exception cref="Exception">Thrown when the game with the specified ID is not found or there is an error updating the game in the database.</exception>
+        /// <exception cref="Exception">Thrown when the game with the specified ID is not found or an error occurs during updating.</exception>
         public void UpdateGame(int id, Game game)
         {
             try
@@ -173,7 +176,7 @@ namespace GamesLibrary.Services
 
                 if (existingGame == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id));
+                    throw new Exception(string.Format(GAME.NOT_FOUND, id));
                 }
 
                 existingGame.Title = game.Title;
@@ -188,18 +191,17 @@ namespace GamesLibrary.Services
                 _dbContext.SaveChanges();
 
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.GAME.ERROR_UPDATING, id), ex);
+                throw new Exception(string.Format(GAME.ERROR_UPDATING, id), ex);
             }
         }
 
-
         /// <summary>
-        /// Delete a Game from the database based on its unique identifier.
+        /// Deletes a game from the database based on its unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the game to be deleted.</param>
-        /// <exception cref="Exception">Thrown when the game is not found or there is an error deleting it from the database.</exception>
+        /// <exception cref="Exception">Thrown when the game is not found or an error occurs during deletion.</exception>
         public void DeleteGame(int id)
         {
             try
@@ -208,7 +210,7 @@ namespace GamesLibrary.Services
 
                 if (game == null)
                 {
-                    throw new Exception(string.Format(ResponseConstants.GAME.NOT_FOUND, id));
+                    throw new Exception(string.Format(GAME.NOT_FOUND, id));
                 }
 
                 _dbContext.Games.Remove(game);
@@ -216,7 +218,7 @@ namespace GamesLibrary.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format(ResponseConstants.GAME.ERROR_DELETING, id), ex);
+                throw new Exception(string.Format(GAME.ERROR_DELETING, id), ex);
             }
         }
     }

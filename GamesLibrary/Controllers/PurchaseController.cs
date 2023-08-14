@@ -2,7 +2,7 @@
 using GamesLibrary.Repository.Models;
 using Microsoft.AspNetCore.Authorization;
 using GamesLibrary.Services;
-using Microsoft.EntityFrameworkCore;
+using static GamesLibrary.Utils.Constants.ResponseConstants;
 
 namespace GamesLibrary.Controllers
 {
@@ -18,13 +18,15 @@ namespace GamesLibrary.Controllers
         }
 
         /// <summary>
-        /// Retrieves all purchases.
+        /// Retrieves all purchases from the database.
         /// </summary>
         /// <remarks>
         /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// A list of all purchases if successful, otherwise an error response.
+        /// Returns a list of all purchases if successful.
+        /// If no purchases are found, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpGet]
         [Authorize(Policy = "ManagerOnly")]
@@ -33,11 +35,17 @@ namespace GamesLibrary.Controllers
             try
             {
                 var purchases = _purchaseService.GetAllPurchases();
+
+                if (purchases == null)
+                {
+                    return NotFound(PURCHASE.NOT_FOUND);
+                }
+
                 return Ok(purchases);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.NOT_FOUND, error = ex.Message });
             }
         }
 
@@ -45,11 +53,11 @@ namespace GamesLibrary.Controllers
         /// Retrieves a purchase by its unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the purchase.</param>
-        /// <remarks>
-        /// This endpoint requires the user to be authorized.
-        /// </remarks>
         /// <returns>
-        /// The purchase's information if found, otherwise a NotFound response.
+        /// Returns the purchase's information if found.
+        /// If the provided ID is invalid, returns a BadRequest response with an appropriate message.
+        /// If no purchase is found with the specified ID, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpGet("{id}")]
         [Authorize]
@@ -59,29 +67,32 @@ namespace GamesLibrary.Controllers
             {
                 if (id <= 0)
                 {
-                return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
+                }
+                var purchase = _purchaseService.GetPurchaseById(id);
+
+                if (purchase == null)
+                {
+                    return NotFound(PURCHASE.NOT_FOUND);
                 }
 
-            var purchase = _purchaseService.GetPurchaseById(id);
-
-            return Ok(purchase);
-
+                return Ok(purchase);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.NOT_FOUND, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Retrieves all purchases made by a specific user.
+        /// Retrieves all purchases by its user identifier.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user whose purchases are being retrieved.</param>
-        /// <remarks>
-        /// This endpoint requires the user to be authorized.
-        /// </remarks>
+        /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>
-        /// A list of purchases made by the user if successful, otherwise a NotFound response.
+        /// Returns a list of all purchases of a user if successful.
+        /// If the provided ID is invalid, returns a BadRequest response with an appropriate message.
+        /// If no purchase is found with the specified ID, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpGet("user/{userId}")]
         [Authorize]
@@ -89,32 +100,35 @@ namespace GamesLibrary.Controllers
         {
             try
             {
-                if (userId == null)
+                if (string.IsNullOrWhiteSpace(userId))
                 {
-                return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_DATA);
                 }
                 var purchases = _purchaseService.GetPurchasesByUserId(userId);
-                if (purchases.Count == 0)
+
+                if (purchases == null)
                 {
-                    return NotFound();
+                    return NotFound(PURCHASE.NOT_FOUND);
                 }
                 return Ok(purchases);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.NOT_FOUND, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Adds a new purchase.
+        /// Adds a new purchase to the database.
         /// </summary>
         /// <param name="purchase">The purchase information to be added.</param>
         /// <remarks>
-        /// This endpoint requires the user to be authorized.
+        /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// If successful, returns a CreatedAtAction response with the URL of the newly created purchase.
+        /// Returns a CreatedAtAction response with the URL of the newly created purchase if successful.
+        /// If the provided purchase data is invalid, returns a BadRequest response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpPost]
         [Authorize]
@@ -122,26 +136,36 @@ namespace GamesLibrary.Controllers
         {
             try
             {
+                if (purchase == null)
+                {
+                    return BadRequest(INVALID_DATA);
+                }
+
                 _purchaseService.AddPurchase(purchase);
+
                 return CreatedAtAction(nameof(GetPurchaseById), new { id = purchase.Id }, purchase);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.NOT_SAVED, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Updates an existing purchase.
+        /// Updates an existing purchase's information in the database.
         /// </summary>
-        /// <param name="id">The unique identifier of the purchase to update.</param>
+        /// <param name="id">The ID of the purchase to be updated.</param>
         /// <param name="purchase">The updated purchase information.</param>
         /// <remarks>
         /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// If successful, returns a NoContent response.
-        /// If the provided id is invalid, returns a BadRequest response.
+        /// Returns a status code indicating the result of the update operation.
+        /// If successful, returns a success message.
+        /// If the provided ID is invalid, returns a BadRequest response.
+        /// If the provided purchase data is invalid, returns a BadRequest response.
+        /// If the purchase with the specified ID is not found, returns a NotFound response.
+        /// If an error occurs during the update operation, returns a 500 Internal Server Error response with an error message.
         /// </returns>
         [HttpPut("{id}")]
         [Authorize(Policy = "ManagerOnly")]
@@ -149,39 +173,38 @@ namespace GamesLibrary.Controllers
         {
             try
             {
-                if (purchase == null)
-                {
-                return BadRequest("Invalid data received.");
-                }
-
                 if (id <= 0)
                 {
-                    return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
                 }
 
-                _purchaseService.UpdatePurchase(id,purchase);
-                return NoContent();
+                if (purchase == null)
+                {
+                    return BadRequest(INVALID_DATA);
+                }
+
+                _purchaseService.UpdatePurchase(id, purchase);
+
+                return Ok(new { message = PURCHASE.SUCCES_UPDATING });
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
-            }
-            catch (DbUpdateException ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the game.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.ERROR_UPDATING, error = ex.Message });
             }
         }
 
         /// <summary>
-        /// Deletes a purchase by its unique identifier.
+        /// Deletes a purchase from the database based on its unique identifier.
         /// </summary>
-        /// <param name="id">The unique identifier of the purchase to delete.</param>
+        /// <param name="id">The unique identifier of the purchase to be deleted.</param>
         /// <remarks>
         /// This endpoint requires the user to have the "ManagerOnly" authorization policy.
         /// </remarks>
         /// <returns>
-        /// If successful, returns a NoContent response.
-        /// If the purchase to delete is not found, returns a NotFound response.
+        /// Returns a status code indicating the result of the update operation.
+        /// If the provided ID is invalid, returns a BadRequest response with an appropriate message.
+        /// If the purchase with the specified ID is not found, returns a NotFound response with an appropriate message.
+        /// If an error occurs during processing, returns a StatusCode 500 response with an error message.
         /// </returns>
         [HttpDelete("{id}")]
         [Authorize(Policy = "ManagerOnly")]
@@ -191,15 +214,16 @@ namespace GamesLibrary.Controllers
             {
                 if (id <= 0)
                 {
-                return BadRequest("Invalid ID.");
+                    return BadRequest(INVALID_ID);
                 }
 
                 _purchaseService.DeletePurchase(id);
-                return NoContent();
+                return Ok(new { message = PURCHASE.SUCCES_DELETING });
+
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = PURCHASE.ERROR_DELETING, error = ex.Message });
             }
         }
     }
